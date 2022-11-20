@@ -5,9 +5,11 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
 
 import java.io.Serializable;
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 
@@ -18,9 +20,8 @@ public class CustomInstantArrayType implements UserType {
     }
 
     @Override
-            .
     public Class returnedClass() {
-        return Instant[].class;
+        return Timestamp[].class;
     }
 
     @Override
@@ -35,17 +36,23 @@ public class CustomInstantArrayType implements UserType {
 
     @Override
     public Object nullSafeGet(ResultSet resultSet, String[] strings, SharedSessionContractImplementor sharedSessionContractImplementor, Object o) throws HibernateException, SQLException {
-        return null;
+        Array array = resultSet.getArray(strings[0]);
+        return array != null? array.getArray() : null;
     }
 
     @Override
-    public void nullSafeSet(PreparedStatement preparedStatement, Object o, int i, SharedSessionContractImplementor sharedSessionContractImplementor) throws HibernateException, SQLException {
-
+    public void nullSafeSet(PreparedStatement preparedStatement, Object o, int index, SharedSessionContractImplementor sessionContractImplementor) throws HibernateException, SQLException {
+        if (o != null && preparedStatement != null) {
+            Array array = sessionContractImplementor.connection().createArrayOf("timestamp", (Timestamp[]) o);
+            preparedStatement.setArray(index, array);
+        } else {
+            preparedStatement.setNull(index, sqlTypes()[0]);
+        }
     }
 
     @Override
     public Object deepCopy(Object o) throws HibernateException {
-        return null;
+        return o;
     }
 
     @Override
@@ -55,16 +62,16 @@ public class CustomInstantArrayType implements UserType {
 
     @Override
     public Serializable disassemble(Object o) throws HibernateException {
-        return null;
+        return (Serializable) o;
     }
 
     @Override
     public Object assemble(Serializable serializable, Object o) throws HibernateException {
-        return null;
+        return serializable;
     }
 
     @Override
     public Object replace(Object o, Object o1, Object o2) throws HibernateException {
-        return null;
+        return o;
     }
 }
